@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Iniciar sesión')}"></head>
+<body>
+<div class="auth">
+    <section class="auth-lado">
+        <div class="brand" style="padding:0">
+            <div class="brand-logo"><i class="bi bi-shield-check"></i></div>
+            <div><b>ControlGasto</b><small>Detección de anomalías</small></div>
+        </div>
+        <div>
+            <h1>Controla cada peso.<br>Detecta lo inusual.</h1>
+            <p class="lead">Analiza los gastos de tu empresa, identifica comportamientos atípicos y gestiona su revisión desde un solo lugar.</p>
+            <ul class="auth-feat">
+                <li><i class="bi bi-graph-up-arrow"></i> Indicadores y gráficos en tiempo real</li>
+                <li><i class="bi bi-exclamation-triangle"></i> Alertas automáticas de anomalías</li>
+                <li><i class="bi bi-cloud-arrow-up"></i> Importación masiva desde Excel y CSV</li>
+            </ul>
+        </div>
+        <small style="color:#9aa0cf">Proyecto de grado · Análisis de datos</small>
+        <div class="auth-flota">
+            <small><i class="bi bi-exclamation-triangle-fill text-warning"></i> Anomalía detectada</small>
+            <b>$4.800.000</b>
+            <small>Papelería · 60x sobre el promedio</small>
+        </div>
+    </section>
+
+    <section class="auth-form">
+        <div class="auth-caja">
+            <div class="brand d-lg-none" style="padding:0 0 24px">
+                <div class="brand-logo text-white"><i class="bi bi-shield-check"></i></div>
+                <div><b>ControlGasto</b></div>
+            </div>
+            <h2>Bienvenido de nuevo</h2>
+            <p class="text-muted mb-4">Ingresa tus credenciales para continuar.</p>
+
+            <div th:if="${param.error}" class="alerta alerta-error"><i class="bi bi-x-octagon-fill"></i> Correo o contraseña incorrectos.</div>
+            <div th:if="${param.logout}" class="alerta alerta-ok"><i class="bi bi-check-circle-fill"></i> Sesión cerrada correctamente.</div>
+            <div th:if="${ok}" class="alerta alerta-ok"><i class="bi bi-check-circle-fill"></i> <span th:text="${ok}"></span></div>
+
+            <form th:action="@{/login}" method="post">
+                <label class="form-label">Correo electrónico</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" name="username" class="form-control" placeholder="correo@empresa.com" required autofocus>
+                </div>
+                <label class="form-label">Contraseña</label>
+                <div class="input-group mb-4">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="password" id="clave" class="form-control" placeholder="••••••••" required>
+                    <button type="button" class="input-group-text" data-ver-clave="#clave" style="cursor:pointer"><i class="bi bi-eye"></i></button>
+                </div>
+                <button class="btn btn-primary w-100">Ingresar <i class="bi bi-arrow-right"></i></button>
+            </form>
+            <p class="text-center mt-4 mb-0 text-muted">¿No tienes cuenta? <a th:href="@{/registro}" class="fw-bold text-decoration-none">Regístrate</a></p>
+        </div>
+    </section>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Gastos')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('gastos')}"></aside>
+
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar('Gastos empresariales', 'Registra, consulta, modifica y elimina gastos')}"></header>
+
+        <main class="contenido">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+
+            <div class="d-flex justify-content-end gap-2 mb-3 flex-wrap">
+                <a th:href="@{/importar}" class="btn btn-soft"><i class="bi bi-cloud-arrow-up"></i> Importar</a>
+                <a th:href="@{/gastos/nuevo}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nuevo gasto</a>
+            </div>
+
+            <div th:replace="~{fragments/layout :: filtros('/gastos')}"></div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><div class="tarjeta kpi k-green">
+                    <div class="kpi-top"><div class="kpi-icono"><i class="bi bi-receipt"></i></div></div>
+                    <div class="kpi-label">Registros</div>
+                    <div class="kpi-valor" th:data-contar="${#lists.size(gastos)}" th:text="${#lists.size(gastos)}">0</div>
+                </div></div>
+                <div class="col-md-4"><div class="tarjeta kpi">
+                    <div class="kpi-top"><div class="kpi-icono"><i class="bi bi-cash-stack"></i></div></div>
+                    <div class="kpi-label">Total</div>
+                    <div class="kpi-valor" data-prefijo="$" th:data-contar="${total}" th:text="'$' + ${#numbers.formatDecimal(total,1,'POINT',0,'COMMA')}">$0</div>
+                </div></div>
+                <div class="col-md-4"><div class="tarjeta kpi k-sky">
+                    <div class="kpi-top"><div class="kpi-icono"><i class="bi bi-calculator"></i></div></div>
+                    <div class="kpi-label">Promedio</div>
+                    <div class="kpi-valor" data-prefijo="$" th:data-contar="${promedio}" th:text="'$' + ${#numbers.formatDecimal(promedio,1,'POINT',0,'COMMA')}">$0</div>
+                </div></div>
+            </div>
+
+            <div class="tarjeta">
+                <div class="tarjeta-cab">
+                    <div><h6>Listado de gastos</h6><small>Busca por cualquier dato de la tabla</small></div>
+                    <div class="buscador" style="min-width:260px">
+                        <i class="bi bi-search"></i>
+                        <input type="search" class="form-control" placeholder="Buscar en la tabla..." data-filtro-tabla="#tablaGastos">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="tabla" id="tablaGastos">
+                        <thead><tr>
+                            <th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Departamento</th><th>Proveedor</th>
+                            <th class="num">Monto</th><th>Alerta</th><th class="num">Acciones</th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="g : ${gastos}">
+                            <td class="text-nowrap" th:text="${#temporals.format(g.fecha,'dd/MM/yyyy')}"></td>
+                            <td class="fw-semibold" th:text="${g.descripcion}"></td>
+                            <td><span class="pill pill-cat" th:data-hue="${g.categoria.nombre}" th:text="${g.categoria.nombre}"></span></td>
+                            <td th:text="${g.departamento.nombre}"></td>
+                            <td th:text="${g.proveedor.nombre}"></td>
+                            <td class="num fw-bold" th:text="'$' + ${#numbers.formatDecimal(g.monto,1,'POINT',2,'COMMA')}"></td>
+                            <td>
+                                <a th:if="${g.anomalia != null}" th:href="@{/anomalias/{id}(id=${g.anomalia.id})}" class="pill et-alta text-decoration-none">
+                                    <span class="punto pulso"></span> Anomalía</a>
+                            </td>
+                            <td class="num">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a th:href="@{/gastos/{id}/editar(id=${g.id})}" class="icon-btn sm" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <form th:action="@{/gastos/{id}/eliminar(id=${g.id})}" method="post" onsubmit="return confirm('¿Eliminar este gasto?');">
+                                        <button class="icon-btn sm peligro" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(gastos)}" class="fila-vacia"><td colspan="8"><div class="vacio"><i class="bi bi-inbox"></i>No hay gastos para los filtros seleccionados</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

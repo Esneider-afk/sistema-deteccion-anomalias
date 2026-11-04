@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('dashboard')}"></aside>
+
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar('Dashboard', 'Resumen y comportamiento de los gastos empresariales')}"></header>
+
+        <main class="contenido">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+
+            <!-- Banner -->
+            <section class="hero">
+                <div>
+                    <h2 th:if="${pendientes > 0}" th:text="'Tienes ' + ${pendientes} + ' anomalía(s) por revisar'">Anomalías</h2>
+                    <h2 th:if="${pendientes == 0}">Todo en orden, no hay anomalías pendientes</h2>
+                    <p>Analizamos cada gasto con criterios estadísticos para ayudarte a detectar comportamientos inusuales.</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/anomalias(estado='PENDIENTE_REVISION')}" class="btn-hero"><i class="bi bi-shield-exclamation"></i> Ver alertas</a>
+                    <a th:href="@{/gastos/nuevo}" class="btn-hero"><i class="bi bi-plus-lg"></i> Nuevo gasto</a>
+                </div>
+            </section>
+
+            <div th:replace="~{fragments/layout :: filtros('/dashboard')}"></div>
+
+            <!-- KPIs -->
+            <div class="row g-3 mb-4" th:with="ultima=${#lists.isEmpty(variaciones) ? null : variaciones[variaciones.size() - 1]}">
+                <div class="col-6 col-xl-3"><div class="tarjeta kpi">
+                    <div class="kpi-top">
+                        <div class="kpi-icono"><i class="bi bi-cash-stack"></i></div>
+                        <span th:if="${ultima != null and ultima.variacion != null}"
+                              class="chip" th:classappend="${ultima.variacion > 0} ? 'chip-sube' : 'chip-baja'">
+                            <i class="bi" th:classappend="${ultima.variacion > 0} ? 'bi-arrow-up-right' : 'bi-arrow-down-right'"></i>
+                            <span th:text="${#numbers.formatDecimal(ultima.variacion,1,1)} + '%'">0%</span>
+                        </span>
+                    </div>
+                    <div class="kpi-label">Total gastado</div>
+                    <div class="kpi-valor" data-prefijo="$" th:data-contar="${total}" th:text="'$' + ${#numbers.formatDecimal(total,1,'POINT',0,'COMMA')}">$0</div>
+                    <div class="kpi-pie">Variación del último mes registrado</div>
+                </div></div>
+
+                <div class="col-6 col-xl-3"><div class="tarjeta kpi k-sky">
+                    <div class="kpi-icono"><i class="bi bi-calculator"></i></div>
+                    <div class="kpi-label">Promedio por gasto</div>
+                    <div class="kpi-valor" data-prefijo="$" th:data-contar="${promedio}" th:text="'$' + ${#numbers.formatDecimal(promedio,1,'POINT',0,'COMMA')}">$0</div>
+                    <div class="kpi-pie">Valor medio de cada registro</div>
+                </div></div>
+
+                <div class="col-6 col-xl-3"><div class="tarjeta kpi k-green">
+                    <div class="kpi-icono"><i class="bi bi-receipt"></i></div>
+                    <div class="kpi-label">Gastos registrados</div>
+                    <div class="kpi-valor" th:data-contar="${cantidad}" th:text="${cantidad}">0</div>
+                    <div class="kpi-pie">Según los filtros aplicados</div>
+                </div></div>
+
+                <div class="col-6 col-xl-3"><div class="tarjeta kpi k-amber">
+                    <div class="kpi-icono"><i class="bi bi-lightning-charge"></i></div>
+                    <div class="kpi-label">Mayor gasto individual</div>
+                    <div class="kpi-valor" data-prefijo="$" th:data-contar="${maximo}" th:text="'$' + ${#numbers.formatDecimal(maximo,1,'POINT',0,'COMMA')}">$0</div>
+                    <div class="kpi-pie">El registro más alto del periodo</div>
+                </div></div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="row g-3">
+                <div class="col-lg-8"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6>Evolución mensual del gasto</h6><small>Total gastado por mes</small></div></div>
+                    <div class="grafico"><canvas id="gMensual"></canvas></div>
+                </div></div>
+                <div class="col-lg-4"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6>Distribución por categoría</h6><small>Participación en el total</small></div></div>
+                    <div class="grafico"><canvas id="gCategoria"></canvas></div>
+                </div></div>
+                <div class="col-lg-6"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6>Gasto por proveedor</h6><small>Quién concentra el gasto</small></div></div>
+                    <div class="grafico"><canvas id="gProveedor"></canvas></div>
+                </div></div>
+                <div class="col-lg-6"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6>Gasto por departamento</h6><small>Áreas con mayor consumo</small></div></div>
+                    <div class="grafico"><canvas id="gDepartamento"></canvas></div>
+                </div></div>
+            </div>
+
+            <!-- Tablas -->
+            <div class="row g-3">
+                <div class="col-lg-7"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6>Resumen por categoría</h6><small>Total, promedio y porcentaje</small></div></div>
+                    <div class="table-responsive">
+                        <table class="tabla">
+                            <thead><tr><th>Categoría</th><th class="num">Total</th><th class="num">Cant.</th><th class="num">Promedio</th><th style="min-width:150px">% del total</th></tr></thead>
+                            <tbody>
+                            <tr th:each="f : ${porCategoria}">
+                                <td><span class="pill pill-cat" th:data-hue="${f.nombre}" th:text="${f.nombre}"></span></td>
+                                <td class="num fw-semibold" th:text="'$' + ${#numbers.formatDecimal(f.total,1,'POINT',0,'COMMA')}"></td>
+                                <td class="num" th:text="${f.cantidad}"></td>
+                                <td class="num" th:text="'$' + ${#numbers.formatDecimal(f.promedio,1,'POINT',0,'COMMA')}"></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="barra"><span th:style="'width:' + ${f.porcentaje} + '%'"></span></div>
+                                        <small class="fw-bold" th:text="${#numbers.formatDecimal(f.porcentaje,1,1)} + '%'"></small>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(porCategoria)}"><td colspan="5"><div class="vacio"><i class="bi bi-inbox"></i>No hay gastos para los filtros seleccionados</div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div></div>
+
+                <div class="col-lg-5"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6>Variación entre periodos</h6><small>Comparación mes a mes</small></div></div>
+                    <div class="table-responsive">
+                        <table class="tabla">
+                            <thead><tr><th>Mes</th><th class="num">Total</th><th class="num">Variación</th></tr></thead>
+                            <tbody>
+                            <tr th:each="v : ${variaciones}">
+                                <td class="fw-semibold" th:text="${v.periodo}"></td>
+                                <td class="num" th:text="'$' + ${#numbers.formatDecimal(v.total,1,'POINT',0,'COMMA')}"></td>
+                                <td class="num">
+                                    <span th:if="${v.variacion == null}" class="chip chip-neutro">—</span>
+                                    <span th:if="${v.variacion != null and v.variacion > 0}" class="chip chip-sube"><i class="bi bi-arrow-up-right"></i> <span th:text="${#numbers.formatDecimal(v.variacion,1,1)} + '%'"></span></span>
+                                    <span th:if="${v.variacion != null and v.variacion <= 0}" class="chip chip-baja"><i class="bi bi-arrow-down-right"></i> <span th:text="${#numbers.formatDecimal(v.variacion,1,1)} + '%'"></span></span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(variaciones)}"><td colspan="3"><div class="vacio"><i class="bi bi-inbox"></i>Sin datos</div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div></div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Datos para los gráficos -->
+<div class="d-none" id="dCat"><i th:each="f : ${porCategoria}" th:data-n="${f.nombre}" th:data-v="${f.total}"></i></div>
+<div class="d-none" id="dMes"><i th:each="v : ${variaciones}" th:data-n="${v.periodo}" th:data-v="${v.total}"></i></div>
+<div class="d-none" id="dProv"><i th:each="f : ${porProveedor}" th:data-n="${f.nombre}" th:data-v="${f.total}"></i></div>
+<div class="d-none" id="dDep"><i th:each="f : ${porDepartamento}" th:data-n="${f.nombre}" th:data-v="${f.total}"></i></div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script>
+    const cat = App.leer('dCat'), mes = App.leer('dMes'), prov = App.leer('dProv'), dep = App.leer('dDep');
+    const tip = { callbacks: { label: c => ' ' + App.moneda(c.parsed.y ?? c.parsed.x ?? c.parsed) } };
+    const ejeY = { beginAtZero: true, border: { display: false }, ticks: { callback: v => App.moneda(v) } };
+
+    if (!App.vacio('gMensual', mes)) {
+        const cv = document.getElementById('gMensual');
+        App.grafico('gMensual', {
+            type: 'line',
+            data: { labels: mes.map(d => d.n), datasets: [{
+                label: 'Gasto total', data: mes.map(d => d.v), borderColor: '#6366f1', borderWidth: 3, fill: true, tension: .4,
+                backgroundColor: App.degradado(cv, 'rgba(99,102,241,.38)', 'rgba(99,102,241,0)'),
+                pointRadius: 5, pointBackgroundColor: '#fff', pointBorderColor: '#6366f1', pointBorderWidth: 2, pointHoverRadius: 8
+            }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tip },
+                       scales: { y: ejeY, x: { grid: { display: false } } } }
+        });
+    }
+
+    if (!App.vacio('gCategoria', cat)) {
+        App.grafico('gCategoria', {
+            type: 'doughnut',
+            data: { labels: cat.map(d => d.n), datasets: [{ data: cat.map(d => d.v), backgroundColor: App.paleta, borderWidth: 3, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--card'), hoverOffset: 8 }] },
+            options: { maintainAspectRatio: false, cutout: '68%',
+                       plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + App.moneda(c.parsed) } } } }
+        });
+    }
+
+    if (!App.vacio('gProveedor', prov)) {
+        App.grafico('gProveedor', {
+            type: 'bar',
+            data: { labels: prov.map(d => d.n), datasets: [{ data: prov.map(d => d.v), backgroundColor: prov.map((_, i) => App.paleta[i % App.paleta.length]), borderRadius: 10, maxBarThickness: 26 }] },
+            options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tip },
+                       scales: { x: { beginAtZero: true, border: { display: false }, ticks: { callback: v => App.moneda(v) } }, y: { grid: { display: false } } } }
+        });
+    }
+
+    if (!App.vacio('gDepartamento', dep)) {
+        const cv = document.getElementById('gDepartamento');
+        App.grafico('gDepartamento', {
+            type: 'bar',
+            data: { labels: dep.map(d => d.n), datasets: [{ data: dep.map(d => d.v), backgroundColor: App.degradado(cv, '#06b6d4', '#6366f1'), borderRadius: 12, maxBarThickness: 48 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tip },
+                       scales: { y: ejeY, x: { grid: { display: false } } } }
+        });
+    }
+</script>
+</body>
+</html>

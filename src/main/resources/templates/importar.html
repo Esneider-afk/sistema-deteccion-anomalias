@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Importar')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('importar')}"></aside>
+
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar('Importar gastos', 'Carga masiva desde Excel o CSV')}"></header>
+
+        <main class="contenido">
+            <div th:if="${error}" class="alerta alerta-error"><i class="bi bi-exclamation-octagon-fill"></i><span th:text="${error}"></span></div>
+
+            <div class="row g-3">
+                <div class="col-lg-7">
+                    <div class="tarjeta">
+                        <div class="tarjeta-cab"><div><h6>Sube tu archivo</h6><small>Formatos: .xlsx, .xls y .csv (máximo 10 MB)</small></div></div>
+                        <form th:action="@{/importar}" method="post" enctype="multipart/form-data">
+                            <label class="dropzone" for="archivo">
+                                <input type="file" id="archivo" name="archivo" accept=".xlsx,.xls,.csv" required>
+                                <i class="bi bi-cloud-arrow-up"></i>
+                                <b>Arrastra tu archivo aquí</b>
+                                <span>o haz clic para buscarlo en tu equipo</span>
+                                <em id="nombreArchivo">Ningún archivo seleccionado</em>
+                            </label>
+                            <button class="btn btn-primary mt-3"><i class="bi bi-upload"></i> Importar y analizar</button>
+                        </form>
+                    </div>
+
+                    <div class="tarjeta" th:if="${resultado != null}">
+                        <div class="tarjeta-cab"><div><h6>Resultado de la importación</h6><small>Resumen del proceso</small></div></div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-6"><div class="tarjeta kpi k-green" style="padding:18px">
+                                <div class="kpi-label mt-0">Gastos importados</div>
+                                <div class="kpi-valor" th:data-contar="${resultado.importados}" th:text="${resultado.importados}">0</div>
+                            </div></div>
+                            <div class="col-6"><div class="tarjeta kpi k-rose" style="padding:18px">
+                                <div class="kpi-label mt-0">Anomalías nuevas</div>
+                                <div class="kpi-valor" th:data-contar="${nuevasAnomalias}" th:text="${nuevasAnomalias}">0</div>
+                            </div></div>
+                        </div>
+                        <a th:if="${nuevasAnomalias > 0}" th:href="@{/anomalias}" class="btn btn-primary btn-sm mb-3"><i class="bi bi-shield-exclamation"></i> Revisar alertas</a>
+                        <div th:if="${!#lists.isEmpty(resultado.errores)}">
+                            <p class="fw-bold mb-2" style="color:var(--peligro)"><i class="bi bi-exclamation-triangle"></i> Filas con errores (no importadas)</p>
+                            <div class="hallazgo" th:each="e : ${resultado.errores}"><i class="bi bi-x-circle"></i><span th:text="${e}"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="tarjeta">
+                        <div class="tarjeta-cab"><div><h6>Formato requerido</h6><small>La primera fila son los encabezados</small></div></div>
+                        <div class="table-responsive mb-3">
+                            <table class="tabla" style="font-size:.8rem">
+                                <thead><tr><th>fecha</th><th>descripcion</th><th>monto</th><th>categoria</th><th>departamento</th><th>proveedor</th></tr></thead>
+                                <tbody>
+                                <tr><td>2026-10-15</td><td>Pasajes</td><td>350000</td><td>Viáticos</td><td>Ventas</td><td>Andina</td></tr>
+                                <tr><td>16/10/2026</td><td>Papel</td><td>85000.50</td><td>Papelería</td><td>Admin</td><td>Central</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="paso"><span class="paso-n"><i class="bi bi-calendar-event"></i></span><div class="small">Fecha como <code>yyyy-MM-dd</code> o <code>dd/MM/yyyy</code>, o celda de fecha en Excel.</div></div>
+                        <div class="paso"><span class="paso-n"><i class="bi bi-currency-dollar"></i></span><div class="small">Monto positivo sin separador de miles: <code>1500000</code> o <code>1500000.50</code>.</div></div>
+                        <div class="paso"><span class="paso-n"><i class="bi bi-filetype-csv"></i></span><div class="small">CSV con coma o punto y coma, en codificación UTF-8.</div></div>
+                        <div class="paso mb-0"><span class="paso-n"><i class="bi bi-magic"></i></span><div class="small">Si la categoría, el departamento o el proveedor no existen, se crean solos.</div></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

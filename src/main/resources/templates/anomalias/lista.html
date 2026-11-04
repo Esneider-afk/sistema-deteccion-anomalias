@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Anomalías')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('anomalias')}"></aside>
+
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar('Alertas de anomalías', 'Gastos y comportamientos inusuales detectados por el sistema')}"></header>
+
+        <main class="contenido">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+
+            <div class="d-flex justify-content-end mb-3">
+                <form th:action="@{/anomalias/analizar}" method="post">
+                    <button class="btn btn-primary"><i class="bi bi-arrow-repeat"></i> Ejecutar análisis</button>
+                </form>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-xl-3"><a th:href="@{/anomalias}" class="tarjeta kpi">
+                    <div class="kpi-icono"><i class="bi bi-flag"></i></div>
+                    <div class="kpi-label">Total detectadas</div>
+                    <div class="kpi-valor" th:data-contar="${total}" th:text="${total}">0</div>
+                </a></div>
+                <div class="col-6 col-xl-3"><a th:href="@{/anomalias(estado='PENDIENTE_REVISION')}" class="tarjeta kpi k-amber">
+                    <div class="kpi-icono"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="kpi-label">Pendientes por revisión</div>
+                    <div class="kpi-valor" th:data-contar="${pendientes}" th:text="${pendientes}">0</div>
+                </a></div>
+                <div class="col-6 col-xl-3"><a th:href="@{/anomalias(estado='JUSTIFICADA')}" class="tarjeta kpi k-green">
+                    <div class="kpi-icono"><i class="bi bi-patch-check"></i></div>
+                    <div class="kpi-label">Justificadas</div>
+                    <div class="kpi-valor" th:data-contar="${justificadas}" th:text="${justificadas}">0</div>
+                </a></div>
+                <div class="col-6 col-xl-3"><a th:href="@{/anomalias(estado='REVISADA')}" class="tarjeta kpi k-sky">
+                    <div class="kpi-icono"><i class="bi bi-eye"></i></div>
+                    <div class="kpi-label">Revisadas</div>
+                    <div class="kpi-valor" th:data-contar="${revisadas}" th:text="${revisadas}">0</div>
+                </a></div>
+            </div>
+
+            <form th:action="@{/anomalias}" method="get" class="tarjeta">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Estado</label>
+                        <select name="estado" class="form-select">
+                            <option value="">Todos</option>
+                            <option th:each="e : ${estados}" th:value="${e.name()}" th:text="${e.etiqueta}"
+                                    th:selected="${estadoSel != null and estadoSel.name() == e.name()}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Severidad</label>
+                        <select name="severidad" class="form-select">
+                            <option value="">Todas</option>
+                            <option value="ALTA" th:selected="${severidadSel == 'ALTA'}">Alta</option>
+                            <option value="MEDIA" th:selected="${severidadSel == 'MEDIA'}">Media</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button class="btn btn-primary flex-fill"><i class="bi bi-funnel"></i> Filtrar</button>
+                        <a th:href="@{/anomalias}" class="icon-btn" title="Limpiar"><i class="bi bi-arrow-counterclockwise"></i></a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="tarjeta">
+                <div class="tarjeta-cab">
+                    <div><h6>Anomalías detectadas</h6><small>Haz clic en una fila para ver el detalle</small></div>
+                    <div class="buscador" style="min-width:240px">
+                        <i class="bi bi-search"></i>
+                        <input type="search" class="form-control" placeholder="Buscar..." data-filtro-tabla="#tablaAnomalias">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="tabla" id="tablaAnomalias">
+                        <thead><tr><th>Fecha</th><th>Descripción</th><th>Proveedor</th><th class="num">Monto</th><th>Criterios</th><th>Severidad</th><th>Estado</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="a : ${anomalias}">
+                            <td class="text-nowrap" th:text="${#temporals.format(a.gasto.fecha,'dd/MM/yyyy')}"></td>
+                            <td class="fw-semibold" th:text="${a.gasto.descripcion}"></td>
+                            <td th:text="${a.gasto.proveedor.nombre}"></td>
+                            <td class="num fw-bold" th:text="'$' + ${#numbers.formatDecimal(a.gasto.monto,1,'POINT',0,'COMMA')}"></td>
+                            <td><span th:each="c : ${#strings.listSplit(a.criterios, ',')}" class="pill et-criterio me-1" th:text="${c}"></span></td>
+                            <td><span class="pill" th:classappend="'et-' + ${#strings.toLowerCase(a.severidad)}"><span class="punto"></span> <span th:text="${a.severidad}"></span></span></td>
+                            <td><span class="pill" th:classappend="'et-' + ${#strings.toLowerCase(a.estado.name())}" th:text="${a.estado.etiqueta}"></span></td>
+                            <td class="num"><a th:href="@{/anomalias/{id}(id=${a.id})}" class="btn btn-soft btn-sm">Ver detalle <i class="bi bi-arrow-right"></i></a></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(anomalias)}" class="fila-vacia"><td colspan="8"><div class="vacio"><i class="bi bi-shield-check"></i>No hay anomalías para los filtros seleccionados</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/layout :: criterios}"></div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

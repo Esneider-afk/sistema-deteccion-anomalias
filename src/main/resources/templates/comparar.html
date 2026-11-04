@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Comparar')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('comparar')}"></aside>
+
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar('Comparar gastos', 'Contrasta dos periodos por categoría, proveedor o departamento')}"></header>
+
+        <main class="contenido">
+            <form th:action="@{/comparar}" method="get">
+                <div class="tarjeta">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                        <div><h6 class="mb-1 fw-bold">Comparar por</h6><small class="text-muted">Elige la dimensión y los periodos</small></div>
+                        <div class="segmentado">
+                            <input type="radio" name="dimension" id="d1" value="categoria" th:checked="${dimension == 'categoria'}" onchange="this.form.submit()"><label for="d1"><i class="bi bi-tags"></i> Categoría</label>
+                            <input type="radio" name="dimension" id="d2" value="proveedor" th:checked="${dimension == 'proveedor'}" onchange="this.form.submit()"><label for="d2"><i class="bi bi-truck"></i> Proveedor</label>
+                            <input type="radio" name="dimension" id="d3" value="departamento" th:checked="${dimension == 'departamento'}" onchange="this.form.submit()"><label for="d3"><i class="bi bi-diagram-3"></i> Departamento</label>
+                        </div>
+                    </div>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3"><label class="form-label"><span class="punto" style="color:#06b6d4"></span> Periodo A · desde</label><input type="date" name="desdeA" class="form-control" th:value="${desdeA}"></div>
+                        <div class="col-md-3"><label class="form-label"><span class="punto" style="color:#06b6d4"></span> Periodo A · hasta</label><input type="date" name="hastaA" class="form-control" th:value="${hastaA}"></div>
+                        <div class="col-md-3"><label class="form-label"><span class="punto" style="color:#6366f1"></span> Periodo B · desde</label><input type="date" name="desdeB" class="form-control" th:value="${desdeB}"></div>
+                        <div class="col-md-3"><label class="form-label"><span class="punto" style="color:#6366f1"></span> Periodo B · hasta</label><input type="date" name="hastaB" class="form-control" th:value="${hastaB}"></div>
+                        <div class="col-12"><button class="btn btn-primary"><i class="bi bi-arrow-left-right"></i> Comparar periodos</button></div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><div class="tarjeta kpi k-sky">
+                    <div class="kpi-top"><div class="kpi-icono"><i class="bi bi-calendar2-week"></i></div></div>
+                    <div class="kpi-label">Total periodo A</div>
+                    <div class="kpi-valor" data-prefijo="$" th:data-contar="${totalA}" th:text="'$' + ${#numbers.formatDecimal(totalA,1,'POINT',0,'COMMA')}">$0</div>
+                </div></div>
+                <div class="col-md-4"><div class="tarjeta kpi">
+                    <div class="kpi-top"><div class="kpi-icono"><i class="bi bi-calendar2-check"></i></div></div>
+                    <div class="kpi-label">Total periodo B</div>
+                    <div class="kpi-valor" data-prefijo="$" th:data-contar="${totalB}" th:text="'$' + ${#numbers.formatDecimal(totalB,1,'POINT',0,'COMMA')}">$0</div>
+                </div></div>
+                <div class="col-md-4"><div class="tarjeta kpi k-amber">
+                    <div class="kpi-top"><div class="kpi-icono"><i class="bi bi-percent"></i></div></div>
+                    <div class="kpi-label">Variación B frente a A</div>
+                    <div class="kpi-valor" id="varTotal" th:data-a="${totalA}" th:data-b="${totalB}">—</div>
+                </div></div>
+            </div>
+
+            <div class="tarjeta">
+                <div class="tarjeta-cab"><div><h6>Comparación gráfica</h6><small>Periodo A frente a periodo B</small></div></div>
+                <div class="grafico" style="height:340px"><canvas id="gComparar"></canvas></div>
+            </div>
+
+            <div class="tarjeta">
+                <div class="tarjeta-cab"><div><h6>Detalle de la comparación</h6><small>Diferencia y variación porcentual</small></div></div>
+                <div class="table-responsive">
+                    <table class="tabla">
+                        <thead><tr><th>Nombre</th><th class="num">Periodo A</th><th class="num">Periodo B</th><th class="num">Diferencia</th><th class="num">Variación</th></tr></thead>
+                        <tbody>
+                        <tr th:each="f : ${filas}">
+                            <td class="fw-semibold" th:text="${f.nombre}"></td>
+                            <td class="num" th:text="'$' + ${#numbers.formatDecimal(f.totalA,1,'POINT',0,'COMMA')}"></td>
+                            <td class="num" th:text="'$' + ${#numbers.formatDecimal(f.totalB,1,'POINT',0,'COMMA')}"></td>
+                            <td class="num" th:text="'$' + ${#numbers.formatDecimal(f.diferencia,1,'POINT',0,'COMMA')}"></td>
+                            <td class="num">
+                                <span th:if="${f.variacion == null}" class="chip chip-neutro">N/A</span>
+                                <span th:if="${f.variacion != null and f.variacion > 0}" class="chip chip-sube"><i class="bi bi-arrow-up-right"></i> <span th:text="${#numbers.formatDecimal(f.variacion,1,1)} + '%'"></span></span>
+                                <span th:if="${f.variacion != null and f.variacion <= 0}" class="chip chip-baja"><i class="bi bi-arrow-down-right"></i> <span th:text="${#numbers.formatDecimal(f.variacion,1,1)} + '%'"></span></span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(filas)}"><td colspan="5"><div class="vacio"><i class="bi bi-inbox"></i>No hay gastos en los periodos seleccionados</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div class="d-none" id="dComp"><i th:each="f : ${filas}" th:data-n="${f.nombre}" th:data-a="${f.totalA}" th:data-b="${f.totalB}"></i></div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script>
+    const datos = App.leer('dComp');
+    if (!App.vacio('gComparar', datos)) {
+        App.grafico('gComparar', {
+            type: 'bar',
+            data: { labels: datos.map(d => d.n), datasets: [
+                { label: 'Periodo A', data: datos.map(d => d.a), backgroundColor: '#06b6d4', borderRadius: 10, maxBarThickness: 34 },
+                { label: 'Periodo B', data: datos.map(d => d.b), backgroundColor: '#6366f1', borderRadius: 10, maxBarThickness: 34 }
+            ] },
+            options: { maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', align: 'end' }, tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': ' + App.moneda(c.parsed.y) } } },
+                scales: { y: { beginAtZero: true, border: { display: false }, ticks: { callback: v => App.moneda(v) } }, x: { grid: { display: false } } } }
+        });
+    }
+    (function () {
+        const el = document.getElementById('varTotal');
+        const a = parseFloat(el.dataset.a), b = parseFloat(el.dataset.b);
+        if (!a) { el.textContent = 'N/A'; return; }
+        const p = ((b - a) / a) * 100;
+        el.textContent = (p > 0 ? '+' : '') + p.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + '%';
+        el.style.color = p > 0 ? 'var(--peligro)' : 'var(--exito)';
+    })();
+</script>
+</body>
+</html>

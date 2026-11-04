@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Detalle de anomalía')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('anomalias')}"></aside>
+
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar('Detalle de la anomalía', 'Por qué se marcó y cómo gestionarla')}"></header>
+
+        <main class="contenido">
+            <a th:href="@{/anomalias}" class="text-decoration-none fw-semibold d-inline-block mb-3"><i class="bi bi-arrow-left"></i> Volver a alertas</a>
+
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+
+            <section class="hero" style="background:linear-gradient(135deg,#be123c,#f43f5e 60%,#fb923c)">
+                <div>
+                    <p class="mb-1">Gasto señalado como anomalía</p>
+                    <h2 data-prefijo="$" th:data-contar="${a.gasto.monto}" th:text="'$' + ${#numbers.formatDecimal(a.gasto.monto,1,'POINT',0,'COMMA')}">$0</h2>
+                    <p th:text="${a.gasto.descripcion} + ' · ' + ${a.gasto.proveedor.nombre}">Descripción</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="pill bg-white" th:classappend="'et-' + ${#strings.toLowerCase(a.severidad)}" th:text="'Severidad ' + ${a.severidad}"></span>
+                    <span class="pill bg-white" th:classappend="'et-' + ${#strings.toLowerCase(a.estado.name())}" th:text="${a.estado.etiqueta}"></span>
+                </div>
+            </section>
+
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="tarjeta">
+                        <div class="tarjeta-cab"><div><h6>Información del gasto</h6><small>Datos registrados</small></div>
+                            <a th:href="@{/gastos/{id}/editar(id=${a.gasto.id})}" class="btn btn-soft btn-sm"><i class="bi bi-pencil"></i> Editar</a></div>
+                        <div class="dato"><span>Fecha</span><span th:text="${#temporals.format(a.gasto.fecha,'dd/MM/yyyy')}"></span></div>
+                        <div class="dato"><span>Descripción</span><span th:text="${a.gasto.descripcion}"></span></div>
+                        <div class="dato"><span>Monto</span><span th:text="'$' + ${#numbers.formatDecimal(a.gasto.monto,1,'POINT',2,'COMMA')}"></span></div>
+                        <div class="dato"><span>Categoría</span><span><span class="pill pill-cat" th:data-hue="${a.gasto.categoria.nombre}" th:text="${a.gasto.categoria.nombre}"></span></span></div>
+                        <div class="dato"><span>Departamento</span><span th:text="${a.gasto.departamento.nombre}"></span></div>
+                        <div class="dato"><span>Proveedor</span><span th:text="${a.gasto.proveedor.nombre}"></span></div>
+                        <div class="dato"><span>Detectada el</span><span th:text="${#temporals.format(a.fechaDeteccion,'dd/MM/yyyy HH:mm')}"></span></div>
+                    </div>
+
+                    <div class="tarjeta">
+                        <div class="tarjeta-cab"><div><h6>¿Por qué se marcó?</h6><small>Hallazgos del análisis</small></div></div>
+                        <div class="mb-3">
+                            <span th:each="c : ${#strings.listSplit(a.criterios, ',')}" class="pill et-criterio me-1" th:text="${c}"></span>
+                        </div>
+                        <div class="hallazgo" th:each="d : ${#strings.listSplit(a.detalle, '|')}">
+                            <i class="bi bi-exclamation-triangle-fill"></i><span th:text="${d}"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="tarjeta">
+                        <div class="tarjeta-cab"><div><h6>Gestión de la anomalía</h6><small>Actualiza el estado y deja constancia</small></div></div>
+                        <form th:action="@{/anomalias/{id}/estado(id=${a.id})}" method="post">
+                            <label class="form-label">Estado</label>
+                            <div class="segmentado mb-3">
+                                <th:block th:each="e : ${estados}">
+                                    <input type="radio" name="estado" th:id="'e-' + ${e.name()}" th:value="${e.name()}" th:checked="${a.estado.name() == e.name()}">
+                                    <label th:for="'e-' + ${e.name()}" th:text="${e.etiqueta}"></label>
+                                </th:block>
+                            </div>
+                            <label class="form-label">Justificación / observaciones</label>
+                            <textarea name="justificacion" rows="5" class="form-control mb-3" maxlength="1000"
+                                      placeholder="Obligatoria si la anomalía se marca como justificada" th:text="${a.justificacion}"></textarea>
+                            <button class="btn btn-primary"><i class="bi bi-check2-circle"></i> Guardar estado</button>
+                        </form>
+                    </div>
+                    <div th:replace="~{fragments/layout :: criterios}"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

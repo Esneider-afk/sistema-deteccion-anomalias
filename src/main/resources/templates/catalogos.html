@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Catálogos')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('catalogos')}"></aside>
+
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar('Catálogos', 'Categorías, departamentos y proveedores para clasificar los gastos')}"></header>
+
+        <main class="contenido">
+            <div th:replace="~{fragments/layout :: mensajes}"></div>
+
+            <div class="row g-3">
+                <!-- CATEGORÍAS -->
+                <div class="col-lg-4"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6><i class="bi bi-tags text-primary"></i> Categorías</h6><small th:text="${#lists.size(categorias)} + ' registradas'"></small></div></div>
+                    <form th:action="@{/catalogos/categorias}" method="post" class="input-group mb-3">
+                        <input name="nombre" class="form-control" placeholder="Nueva categoría" required>
+                        <button class="btn btn-primary"><i class="bi bi-plus-lg"></i></button>
+                    </form>
+                    <div class="item-lista" th:each="c : ${categorias}" th:data-hue="${c.nombre}">
+                        <span class="inicial" th:data-hue="${c.nombre}" th:text="${#strings.substring(c.nombre,0,1)}"></span>
+                        <span class="nombre" th:text="${c.nombre}"></span>
+                        <form th:action="@{/catalogos/categorias/{id}/eliminar(id=${c.id})}" method="post" onsubmit="return confirm('¿Eliminar categoría?');">
+                            <button class="icon-btn sm peligro"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div></div>
+
+                <!-- DEPARTAMENTOS -->
+                <div class="col-lg-4"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6><i class="bi bi-diagram-3 text-primary"></i> Departamentos</h6><small th:text="${#lists.size(departamentos)} + ' registrados'"></small></div></div>
+                    <form th:action="@{/catalogos/departamentos}" method="post" class="input-group mb-3">
+                        <input name="nombre" class="form-control" placeholder="Nuevo departamento" required>
+                        <button class="btn btn-primary"><i class="bi bi-plus-lg"></i></button>
+                    </form>
+                    <div class="item-lista" th:each="d : ${departamentos}">
+                        <span class="inicial" th:data-hue="${d.nombre}" th:text="${#strings.substring(d.nombre,0,1)}"></span>
+                        <span class="nombre" th:text="${d.nombre}"></span>
+                        <form th:action="@{/catalogos/departamentos/{id}/eliminar(id=${d.id})}" method="post" onsubmit="return confirm('¿Eliminar departamento?');">
+                            <button class="icon-btn sm peligro"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div></div>
+
+                <!-- PROVEEDORES -->
+                <div class="col-lg-4"><div class="tarjeta">
+                    <div class="tarjeta-cab"><div><h6><i class="bi bi-truck text-primary"></i> Proveedores</h6><small th:text="${#lists.size(proveedores)} + ' registrados'"></small></div></div>
+                    <form th:action="@{/catalogos/proveedores}" method="post" class="mb-3">
+                        <div class="input-group">
+                            <input name="nombre" class="form-control" placeholder="Nombre" required>
+                            <input name="nit" class="form-control" placeholder="NIT (opcional)">
+                            <button class="btn btn-primary"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                    </form>
+                    <div class="item-lista" th:each="p : ${proveedores}">
+                        <span class="inicial" th:data-hue="${p.nombre}" th:text="${#strings.substring(p.nombre,0,1)}"></span>
+                        <span class="nombre"><span th:text="${p.nombre}"></span>
+                            <small class="d-block text-muted" th:if="${p.nit != null and !p.nit.isBlank()}" th:text="'NIT ' + ${p.nit}"></small></span>
+                        <form th:action="@{/catalogos/proveedores/{id}/eliminar(id=${p.id})}" method="post" onsubmit="return confirm('¿Eliminar proveedor?');">
+                            <button class="icon-btn sm peligro"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div></div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Gasto')}"></head>
+<body>
+<div class="app">
+    <aside th:replace="~{fragments/layout :: sidebar('gastos')}"></aside>
+
+    <div class="main">
+        <header th:replace="~{fragments/layout :: topbar(${form.id == null ? 'Registrar gasto' : 'Modificar gasto'}, 'Completa la información del gasto')}"></header>
+
+        <main class="contenido">
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <form th:action="@{/gastos/guardar}" th:object="${form}" method="post" class="tarjeta">
+                        <input type="hidden" th:field="*{id}">
+                        <div class="tarjeta-cab"><div><h6>Datos del gasto</h6><small>Todos los campos son obligatorios</small></div></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Fecha</label>
+                                <input type="date" class="form-control" th:field="*{fecha}">
+                                <div class="error-campo" th:if="${#fields.hasErrors('fecha')}" th:errors="*{fecha}"></div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Descripción</label>
+                                <input type="text" class="form-control" th:field="*{descripcion}" maxlength="255" placeholder="Ej. Compra de resmas de papel">
+                                <div class="error-campo" th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Monto (COP)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0" class="form-control" th:field="*{monto}" placeholder="0">
+                                </div>
+                                <div class="error-campo" th:if="${#fields.hasErrors('monto')}" th:errors="*{monto}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Categoría</label>
+                                <select class="form-select" th:field="*{categoriaId}">
+                                    <option value="">Seleccione...</option>
+                                    <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}"></option>
+                                </select>
+                                <div class="error-campo" th:if="${#fields.hasErrors('categoriaId')}" th:errors="*{categoriaId}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Departamento</label>
+                                <select class="form-select" th:field="*{departamentoId}">
+                                    <option value="">Seleccione...</option>
+                                    <option th:each="d : ${departamentos}" th:value="${d.id}" th:text="${d.nombre}"></option>
+                                </select>
+                                <div class="error-campo" th:if="${#fields.hasErrors('departamentoId')}" th:errors="*{departamentoId}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Proveedor</label>
+                                <select class="form-select" th:field="*{proveedorId}">
+                                    <option value="">Seleccione...</option>
+                                    <option th:each="p : ${proveedores}" th:value="${p.id}" th:text="${p.nombre}"></option>
+                                </select>
+                                <div class="error-campo" th:if="${#fields.hasErrors('proveedorId')}" th:errors="*{proveedorId}"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button class="btn btn-primary"><i class="bi bi-check2-circle"></i> Guardar gasto</button>
+                            <a th:href="@{/gastos}" class="btn btn-soft">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="tarjeta">
+                        <div class="tarjeta-cab"><div><h6>¿Qué pasa al guardar?</h6><small>Análisis automático</small></div><i class="bi bi-stars fs-4" style="color:var(--primario)"></i></div>
+                        <div class="paso"><span class="paso-n">1</span><div class="small">El gasto se registra y se clasifica por categoría, departamento y proveedor.</div></div>
+                        <div class="paso"><span class="paso-n">2</span><div class="small">El sistema lo compara con tu historial usando criterios estadísticos.</div></div>
+                        <div class="paso mb-0"><span class="paso-n">3</span><div class="small">Si es inusual, se genera una alerta que podrás revisar en <b>Anomalías</b>.</div></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

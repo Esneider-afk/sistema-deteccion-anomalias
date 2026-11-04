@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Crear cuenta')}"></head>
+<body>
+<div class="auth">
+    <section class="auth-lado">
+        <div class="brand" style="padding:0">
+            <div class="brand-logo"><i class="bi bi-shield-check"></i></div>
+            <div><b>ControlGasto</b><small>Detección de anomalías</small></div>
+        </div>
+        <div>
+            <h1>Empieza a ver<br>lo que antes no veías.</h1>
+            <p class="lead">Crea tu cuenta y comienza a registrar, importar y analizar los gastos de tu empresa en minutos.</p>
+            <ul class="auth-feat">
+                <li><i class="bi bi-tags"></i> Clasifica por categoría, departamento y proveedor</li>
+                <li><i class="bi bi-bar-chart-steps"></i> Compara periodos y mide variaciones</li>
+                <li><i class="bi bi-patch-check"></i> Gestiona anomalías: pendientes, justificadas y revisadas</li>
+            </ul>
+        </div>
+        <small style="color:#9aa0cf">Proyecto de grado · Análisis de datos</small>
+    </section>
+
+    <section class="auth-form">
+        <div class="auth-caja">
+            <h2>Crear cuenta</h2>
+            <p class="text-muted mb-4">Completa tus datos para registrarte.</p>
+
+            <div th:if="${error}" class="alerta alerta-error"><i class="bi bi-x-octagon-fill"></i> <span th:text="${error}"></span></div>
+
+            <form th:action="@{/registro}" method="post">
+                <label class="form-label">Nombre completo</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" name="nombre" class="form-control" placeholder="Tu nombre" required>
+                </div>
+                <label class="form-label">Correo electrónico</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" name="email" class="form-control" placeholder="correo@empresa.com" required>
+                </div>
+                <label class="form-label">Contraseña <span class="text-muted fw-normal">(mínimo 6 caracteres)</span></label>
+                <div class="input-group mb-4">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="password" id="clave" class="form-control" minlength="6" required>
+                    <button type="button" class="input-group-text" data-ver-clave="#clave" style="cursor:pointer"><i class="bi bi-eye"></i></button>
+                </div>
+                <button class="btn btn-primary w-100">Crear cuenta <i class="bi bi-arrow-right"></i></button>
+            </form>
+            <p class="text-center mt-4 mb-0 text-muted">¿Ya tienes cuenta? <a th:href="@{/login}" class="fw-bold text-decoration-none">Inicia sesión</a></p>
+        </div>
+    </section>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

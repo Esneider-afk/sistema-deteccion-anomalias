@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titulo} + ' | ControlGasto'">ControlGasto</title>
+    <script>
+        (function () {
+            var t = 'light';
+            try { t = localStorage.getItem('tema') || 'light'; } catch (e) {}
+            document.documentElement.setAttribute('data-theme', t);
+            document.documentElement.setAttribute('data-bs-theme', t);
+        })();
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/estilos.css}">
+</head>
+
+<body>
+
+<!-- ============ MENÚ LATERAL ============ -->
+<aside th:fragment="sidebar(activo)" class="sidebar">
+    <div class="brand">
+        <div class="brand-logo"><i class="bi bi-shield-check"></i></div>
+        <div><b>ControlGasto</b><small>Detección de anomalías</small></div>
+    </div>
+    <nav>
+        <div class="nav-titulo">General</div>
+        <a th:href="@{/dashboard}" th:classappend="${activo == 'dashboard'} ? 'active'"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+        <a th:href="@{/gastos}" th:classappend="${activo == 'gastos'} ? 'active'"><i class="bi bi-receipt"></i> Gastos</a>
+        <a th:href="@{/importar}" th:classappend="${activo == 'importar'} ? 'active'"><i class="bi bi-cloud-arrow-up"></i> Importar</a>
+
+        <div class="nav-titulo">Análisis</div>
+        <a th:href="@{/comparar}" th:classappend="${activo == 'comparar'} ? 'active'"><i class="bi bi-bar-chart-steps"></i> Comparar</a>
+        <a th:href="@{/anomalias}" th:classappend="${activo == 'anomalias'} ? 'active'">
+            <i class="bi bi-exclamation-triangle"></i> Anomalías
+            <span class="nav-badge" th:if="${pendientes != null and pendientes > 0}" th:text="${pendientes}">0</span>
+        </a>
+
+        <div class="nav-titulo">Configuración</div>
+        <a th:href="@{/catalogos}" th:classappend="${activo == 'catalogos'} ? 'active'"><i class="bi bi-tags"></i> Catálogos</a>
+    </nav>
+
+    <div class="sidebar-user">
+        <div class="small text-white-50">Sesión iniciada como</div>
+        <div class="fw-semibold small text-truncate mb-3" sec:authentication="name">usuario</div>
+        <form th:action="@{/logout}" method="post">
+            <button class="btn btn-sm"><i class="bi bi-box-arrow-left"></i> Cerrar sesión</button>
+        </form>
+    </div>
+</aside>
+
+<!-- ============ BARRA SUPERIOR ============ -->
+<header th:fragment="topbar(titulo, subtitulo)" class="topbar">
+    <button class="icon-btn d-lg-none" id="btnMenu" type="button" aria-label="Menú"><i class="bi bi-list fs-5"></i></button>
+    <div class="topbar-titulo">
+        <h1 th:text="${titulo}">Título</h1>
+        <p th:text="${subtitulo}">Subtítulo</p>
+    </div>
+    <div class="topbar-acciones">
+        <span class="chip-fecha d-none d-md-inline-flex"><i class="bi bi-calendar3"></i> <span id="fechaHoy"></span></span>
+        <button class="icon-btn" id="btnTema" type="button" title="Cambiar tema"><i class="bi bi-moon-stars"></i></button>
+        <span class="avatar" id="avatar" sec:authentication="name">U</span>
+    </div>
+</header>
+
+<!-- ============ MENSAJES ============ -->
+<div th:fragment="mensajes">
+    <div th:if="${ok}" class="alerta alerta-ok" data-auto>
+        <i class="bi bi-check-circle-fill"></i><span th:text="${ok}"></span>
+    </div>
+    <div th:if="${error}" class="alerta alerta-error">
+        <i class="bi bi-exclamation-octagon-fill"></i><span th:text="${error}"></span>
+    </div>
+</div>
+
+<!-- ============ FILTROS ============ -->
+<form th:fragment="filtros(accion)" th:action="@{${accion}}" method="get" class="tarjeta">
+    <div class="row g-3 align-items-end">
+        <div class="col-6 col-md-2">
+            <label class="form-label">Desde</label>
+            <input type="date" name="desde" class="form-control" th:value="${desde}">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label">Hasta</label>
+            <input type="date" name="hasta" class="form-control" th:value="${hasta}">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label">Categoría</label>
+            <select name="categoriaId" class="form-select">
+                <option value="">Todas</option>
+                <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}"
+                        th:selected="${categoriaId != null and categoriaId == c.id}"></option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label">Proveedor</label>
+            <select name="proveedorId" class="form-select">
+                <option value="">Todos</option>
+                <option th:each="p : ${proveedores}" th:value="${p.id}" th:text="${p.nombre}"
+                        th:selected="${proveedorId != null and proveedorId == p.id}"></option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label">Departamento</label>
+            <select name="departamentoId" class="form-select">
+                <option value="">Todos</option>
+                <option th:each="d : ${departamentos}" th:value="${d.id}" th:text="${d.nombre}"
+                        th:selected="${departamentoId != null and departamentoId == d.id}"></option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2 d-flex gap-2">
+            <button class="btn btn-primary flex-fill"><i class="bi bi-funnel"></i> Filtrar</button>
+            <a th:href="@{${accion}}" class="icon-btn" title="Limpiar filtros"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+    </div>
+</form>
+
+<!-- ============ CRITERIOS DE DETECCIÓN ============ -->
+<div th:fragment="criterios" class="tarjeta">
+    <div class="tarjeta-cab">
+        <div><h6>Criterios de detección</h6><small>Cómo decide el sistema qué es inusual</small></div>
+        <i class="bi bi-cpu fs-4" style="color:var(--primario)"></i>
+    </div>
+    <div class="criterio">
+        <span class="criterio-n">1</span>
+        <div><b>Z-SCORE · monto atípico en su categoría</b><br>
+            Se compara el monto con el promedio y la desviación estándar del resto de gastos de la misma categoría.
+            Alerta si z ≥ <b th:text="${zUmbral}">2.5</b> (mínimo <b th:text="${minMuestra}">5</b> gastos de referencia).</div>
+    </div>
+    <div class="criterio">
+        <span class="criterio-n">2</span>
+        <div><b>PROVEEDOR · desvío frente al historial</b><br>
+            El monto supera <b th:text="${factorProveedor}">3</b> veces el promedio histórico del proveedor
+            (mínimo <b th:text="${minHistorial}">3</b> gastos previos).</div>
+    </div>
+    <div class="criterio">
+        <span class="criterio-n">3</span>
+        <div><b>DUPLICADO · posible doble registro</b><br>
+            Existe otro gasto con el mismo proveedor, la misma fecha y el mismo monto.</div>
+    </div>
+    <p class="small mb-0" style="color:var(--texto-3)">
+        Severidad <b>ALTA</b>: se cumplen dos o más criterios o z ≥ 3.5. Severidad <b>MEDIA</b>: se cumple un solo criterio.</p>
+</div>
+
+<!-- ============ SCRIPTS ============ -->
+<div th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</div>
+
+</body>
+</html>
